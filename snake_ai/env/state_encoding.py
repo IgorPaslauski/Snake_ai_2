@@ -5,12 +5,15 @@ from .snake_env import SnakeEnv, Direction
 def encode_state(env: SnakeEnv) -> np.ndarray:
     """
     Converte o estado atual do ambiente em um vetor de entrada para a rede neural.
-    Versão Simplificada (4 Inputs):
+    Versão com Distância e Heurística Dinâmica (6 Inputs):
     
     1. Perigo (3 valores): Frente, Direita, Esquerda.
-    2. Maçã (1 valor): Ângulo relativo à cabeça (normalizado).
+    2. Maçã (2 valores): 
+       - Ângulo relativo à cabeça (normalizado).
+       - Distância normalizada.
+    3. Tamanho (1 valor): Comprimento atual normalizado.
     
-    Total: 3 + 1 = 4 inputs.
+    Total: 3 + 2 + 1 = 6 inputs.
     """
     
     state_info = env._get_state_info()
@@ -67,29 +70,32 @@ def encode_state(env: SnakeEnv) -> np.ndarray:
         1.0 if is_collision(pt_left) else 0.0
     ]
 
-    # 2. Maçã (Apenas Ângulo)
-    # Vetor Cabeça -> Maçã
+    # 2. Maçã (Ângulo e Distância)
     apple_vec_x = apple[0] - head[0]
     apple_vec_y = apple[1] - head[1]
     
-    # Ângulo da maçã em relação ao eixo X global
+    # Ângulo
     angle_apple = math.atan2(apple_vec_y, apple_vec_x)
-    # Ângulo da direção atual em relação ao eixo X global
     angle_head = math.atan2(dir_vector[1], dir_vector[0])
-    
-    # Diferença (ângulo relativo)
     angle_diff = angle_apple - angle_head
     
-    # Normalizar para [-PI, PI]
     if angle_diff > math.pi:
         angle_diff -= 2 * math.pi
     elif angle_diff <= -math.pi:
         angle_diff += 2 * math.pi
         
-    # Normalizar para [-1, 1]
     norm_angle = angle_diff / math.pi
     
-    # Concatenar: [Danger(3), Angle(1)]
-    state_vector = np.array(danger + [norm_angle], dtype=np.float32)
+    # Distância
+    dist = math.sqrt(apple_vec_x**2 + apple_vec_y**2)
+    max_dist = math.sqrt(width**2 + height**2)
+    norm_dist = dist / max_dist
+    
+    # 3. Tamanho da Cobra (Normalizado)
+    max_len = width * height
+    norm_len = len(snake) / max_len
+    
+    # Concatenar: [Danger(3), Angle(1), Dist(1), Size(1)]
+    state_vector = np.array(danger + [norm_angle, norm_dist, norm_len], dtype=np.float32)
     
     return state_vector

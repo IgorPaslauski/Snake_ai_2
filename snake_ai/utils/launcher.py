@@ -28,6 +28,10 @@ class ConfigScreen:
         self.create_entry(main_frame, "Largura do Tabuleiro:", "width", "10")
         self.create_entry(main_frame, "Altura do Tabuleiro:", "height", "10")
         
+        # Vincular atualização da energia ao mudar tamanho do grid
+        self.entry_width.bind("<KeyRelease>", self.update_energy)
+        self.entry_height.bind("<KeyRelease>", self.update_energy)
+        
         # Energy
         self.create_entry(main_frame, "Energia Inicial:", "initial_energy", "100")
         
@@ -64,6 +68,18 @@ class ConfigScreen:
         
         # Store entry ref using key
         setattr(self, f"entry_{key}", entry)
+
+    def update_energy(self, event=None):
+        """Atualiza automaticamente a energia baseada no tamanho do grid."""
+        try:
+            w = int(self.entry_width.get() or 0)
+            h = int(self.entry_height.get() or 0)
+            if w > 0 and h > 0:
+                new_energy = w * h
+                self.entry_initial_energy.delete(0, tk.END)
+                self.entry_initial_energy.insert(0, str(new_energy))
+        except ValueError:
+            pass # Ignora se não for número enquanto digita
 
     def on_start(self):
         try:

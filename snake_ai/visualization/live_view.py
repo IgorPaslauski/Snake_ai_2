@@ -65,7 +65,7 @@ class PygameRenderer:
         for i, (x, y) in enumerate(env.snake):
             color = (0, 255, 0) # Verde
             if i == 0:
-                color = (0, 200, 0) # Cabeça
+                color = (255, 255, 0) # Cabeça Amarela
             
             rect = pygame.Rect(x * self.cell_size, y * self.cell_size + y_offset, self.cell_size, self.cell_size)
             pygame.draw.rect(self.screen, color, rect)

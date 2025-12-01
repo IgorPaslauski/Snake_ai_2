@@ -41,8 +41,8 @@ def main():
     ELITISM = max(2, int(POPULATION_SIZE * 0.05)) # 5% de elitismo
     MUTATION_STD = 0.2
     
-    # Arquitetura da MLP: Input=4 (Danger=3, Angle=1), Hidden=[16, 12], Output=3
-    LAYER_SIZES = [4, 16, 12, 3]
+    # Arquitetura da MLP: Input=6 (Danger=3, Angle=1, Dist=1, Size=1), Hidden=[16, 12], Output=3
+    LAYER_SIZES = [6, 16, 12, 3]
     
     EPISODES_PER_EVAL = 3
     SNAPSHOT_INTERVAL = 50

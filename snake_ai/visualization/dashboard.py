@@ -185,7 +185,7 @@ class DashboardRenderer:
                 
                 # Cobra
                 for idx, (sx, sy) in enumerate(envs[i].snake):
-                    color = (0, 255, 0) if idx > 0 else (0, 200, 0) # Verde / Verde Escuro
+                    color = (0, 255, 0) if idx > 0 else (255, 255, 0) # Verde corpo, Amarelo cabeça
                     if dones[i]: color = (80, 80, 80) # Cinza se morto
                         
                     rect = (game_x + sx * self.cell_size, game_y + sy * self.cell_size, self.cell_size - 1, self.cell_size - 1)
