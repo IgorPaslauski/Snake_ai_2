@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import sys
 from tqdm import tqdm
 import time
 
@@ -12,30 +13,50 @@ from snake_ai.utils.paths import create_directories, MODELS_DIR, LOGS_DIR, PLOTS
 from snake_ai.visualization.plots import plot_training_curves
 from snake_ai.visualization.board_snapshots import save_generation_snapshot
 from snake_ai.visualization.dashboard import DashboardRenderer
+from snake_ai.utils.launcher import ConfigScreen
 
 def main():
-    # --- Configurações / Hiperparâmetros ---
+    # --- 1. Tela de Configuração ---
+    print("Abrindo tela de configuração...")
+    launcher = ConfigScreen()
+    user_config = launcher.show()
+    
+    if user_config is None:
+        print("Configuração cancelada ou janela fechada. Saindo.")
+        sys.exit(0)
+        
+    # --- 2. Aplicar Configurações ---
     ENV_CONFIG = {
-        "width": 10,
-        "height": 10,
-        "initial_energy": 100 # 10*10
+        "width": user_config["width"],
+        "height": user_config["height"],
+        "initial_energy": user_config["initial_energy"],
+        "grow_on_eat": user_config["grow_on_eat"]
     }
     
-    POPULATION_SIZE = 150
-    GENERATIONS = 1000
-    ELITISM = 10
-    MUTATION_RATE = 0.1
+    POPULATION_SIZE = user_config["population_size"]
+    GENERATIONS = user_config["generations"]
+    MUTATION_RATE = user_config["mutation_rate"]
+    
+    # Fixos ou derivados
+    ELITISM = max(2, int(POPULATION_SIZE * 0.05)) # 5% de elitismo
     MUTATION_STD = 0.2
     
-    # Arquitetura da MLP: Input=6 (Danger=3, Polar=2, Energy=1), Hidden=[16, 12], Output=3
-    LAYER_SIZES = [6, 16, 12, 3]
+    # Arquitetura da MLP: Input=4 (Danger=3, Angle=1), Hidden=[16, 12], Output=3
+    LAYER_SIZES = [4, 16, 12, 3]
     
     EPISODES_PER_EVAL = 3
     SNAPSHOT_INTERVAL = 50
     
-    # Configurações de Visualização Ao Vivo
-    LIVE_DASHBOARD = True  # Novo Dashboard unificado
-    VIEW_SPEED = 50        # FPS aumentado para não demorar muito
+    # Visualização
+    LIVE_DASHBOARD = user_config["live_dashboard"]
+    VIEW_SPEED = user_config["fps"]
+    
+    print("\n--- Configuração Iniciada ---")
+    print(f"Gerações: {GENERATIONS}")
+    print(f"População: {POPULATION_SIZE}")
+    print(f"Crescer corpo: {user_config['grow_on_eat']}")
+    print(f"Dashboard: {LIVE_DASHBOARD}")
+    print("-----------------------------\n")
     
     # --- Inicialização ---
     create_directories()
@@ -116,9 +137,12 @@ def main():
                 top_9_genomes = [population[i] for i in top_9_indices]
                 
                 # Renderizar visualização paralela
-                # nn_template deve ter os pesos do melhor para que as linhas sejam desenhadas corretamente (opcional na implementação atual do dash)
                 nn.set_weights_flat(best_gen_genome) 
-                dashboard.render_generation(top_9_genomes, nn, speed=VIEW_SPEED)
+                should_quit = dashboard.render_generation(top_9_genomes, nn, speed=VIEW_SPEED)
+                
+                if should_quit:
+                    print("\nVisualização fechada pelo usuário. Encerrando treinamento...")
+                    break
             
             # Snapshot Estático
             if gen % SNAPSHOT_INTERVAL == 0:

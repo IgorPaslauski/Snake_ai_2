@@ -26,7 +26,7 @@ def main():
         "initial_energy": 100
     }
     
-    LAYER_SIZES = [6, 16, 12, 3]
+    LAYER_SIZES = [4, 16, 12, 3]
     nn = NeuralNetwork(LAYER_SIZES)
     
     print("Iniciando visualização... (Pressione ESC ou feche a janela para sair)")

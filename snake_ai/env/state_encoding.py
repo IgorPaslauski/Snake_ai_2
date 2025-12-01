@@ -5,14 +5,12 @@ from .snake_env import SnakeEnv, Direction
 def encode_state(env: SnakeEnv) -> np.ndarray:
     """
     Converte o estado atual do ambiente em um vetor de entrada para a rede neural.
-    Usando coordenadas polares (distância e ângulo) para a maçã e visão egocêntrica.
+    Versão Simplificada (4 Inputs):
     
-    Inputs:
     1. Perigo (3 valores): Frente, Direita, Esquerda.
-    2. Maçã (2 valores): Distância (normalizada), Ângulo (relativo à cabeça, normalizado).
-    3. Energia (1 valor): Normalizada.
+    2. Maçã (1 valor): Ângulo relativo à cabeça (normalizado).
     
-    Total: 3 + 2 + 1 = 6 inputs.
+    Total: 3 + 1 = 4 inputs.
     """
     
     state_info = env._get_state_info()
@@ -22,8 +20,6 @@ def encode_state(env: SnakeEnv) -> np.ndarray:
     direction = state_info["direction"]
     width = state_info["width"]
     height = state_info["height"]
-    energy = state_info["energy"]
-    initial_energy = state_info["initial_energy"]
 
     # Helper para verificar colisão em um ponto arbitrário
     def is_collision(pt):
@@ -41,7 +37,6 @@ def encode_state(env: SnakeEnv) -> np.ndarray:
     point_d = (head[0], head[1] + 1)
 
     # Vetores de direção atual
-    # UP: (0, -1), RIGHT: (1, 0), DOWN: (0, 1), LEFT: (-1, 0)
     dir_vector = (0, 0)
     
     if direction == Direction.UP:
@@ -72,17 +67,11 @@ def encode_state(env: SnakeEnv) -> np.ndarray:
         1.0 if is_collision(pt_left) else 0.0
     ]
 
-    # 2. Maçã Polar (Distância e Ângulo)
+    # 2. Maçã (Apenas Ângulo)
     # Vetor Cabeça -> Maçã
     apple_vec_x = apple[0] - head[0]
     apple_vec_y = apple[1] - head[1]
     
-    # Distância Euclidiana
-    dist = math.sqrt(apple_vec_x**2 + apple_vec_y**2)
-    max_dist = math.sqrt(width**2 + height**2)
-    norm_dist = dist / max_dist # 0 a 1
-    
-    # Ângulo
     # Ângulo da maçã em relação ao eixo X global
     angle_apple = math.atan2(apple_vec_y, apple_vec_x)
     # Ângulo da direção atual em relação ao eixo X global
@@ -100,10 +89,7 @@ def encode_state(env: SnakeEnv) -> np.ndarray:
     # Normalizar para [-1, 1]
     norm_angle = angle_diff / math.pi
     
-    # 3. Energia
-    energy_norm = [energy / initial_energy]
-
-    # Concatenar: [Danger(3), Dist(1), Angle(1), Energy(1)]
-    state_vector = np.array(danger + [norm_dist, norm_angle] + energy_norm, dtype=np.float32)
+    # Concatenar: [Danger(3), Angle(1)]
+    state_vector = np.array(danger + [norm_angle], dtype=np.float32)
     
     return state_vector
