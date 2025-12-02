@@ -53,13 +53,13 @@ def evaluate_genome(
         
         # --- HEURÍSTICA DINÂMICA ---
         
+        # Recompensa base por passos (incentiva movimento e sobrevivência)
+        episode_fitness = (score * 100) + (steps * 0.5)
+        
         if final_len < size_threshold:
             # FASE DE CRESCIMENTO
             # Prioridade: Comer.
-            # Maçã vale muito (100). Passo vale pouco (0.1).
-            # Penalidade por morrer na parede (colisão simples) deve ser alta para aprender limites.
-            
-            episode_fitness = (score * 100) + (steps * 0.1)
+            # Maçã vale muito (100). Passo vale pouco (0.5 já adicionado).
             
             # Penalidade extra se morreu cedo sem comer nada
             if score == 0:
@@ -67,23 +67,24 @@ def evaluate_genome(
             
             # Penalidade aumentada por bater na parede
             if collision_reason == "wall_collision":
-                episode_fitness -= 200 # Penalidade alta por colisão com parede
+                episode_fitness -= 500 # Penalidade alta por colisão com parede
                 
         else:
             # FASE DE SOBREVIVÊNCIA
             # Prioridade: Manter-se vivo (evitar auto-colisão).
-            # Maçã vale menos relativo ao passo (ainda boa, mas passos somam muito).
-            # Passo vale muito mais (1.0 ou mais), pois cada passo vivo é vitória.
+            # Passo vale mais na fase de sobrevivência
+            episode_fitness += steps * 1.5 # Total steps reward = 2.0
             
-            episode_fitness = (score * 200) + (steps * 2.0) # Scaling up rewards
+            # Bônus extra por tamanho grande
+            episode_fitness += score * 200 
             
             # Penalidade aumentada por bater na parede
             if collision_reason == "wall_collision":
-                episode_fitness -= 300 # Penalidade muito alta por colisão com parede na fase de sobrevivência
+                episode_fitness -= 800 # Penalidade extremamente alta por colisão com parede na fase de sobrevivência
             
-            # Penalidade por colisão com corpo (menor que parede, mas ainda significativa)
+            # Penalidade por colisão com corpo (muito alta para evitar esse comportamento)
             if collision_reason == "body_collision":
-                episode_fitness -= 500 # Penalidade severa por auto-colisão
+                episode_fitness -= 1000 # Penalidade extremamente severa por auto-colisão
             
             # Aqui a morte é natural, mas queremos maximizar steps.
             # O score * 200 garante que comer ainda é melhor que só rodar,

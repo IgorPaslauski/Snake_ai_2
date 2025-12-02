@@ -100,7 +100,12 @@ class SnakeEnv:
         if new_head == self.apple:
             self.score += 1
             reward = 10.0
-            self.energy = self.initial_energy
+            
+            # Aumentar energia baseada no tamanho (Crescimento)
+            # Quanto maior a cobra, mais energia ela precisa/tem para caçar
+            energy_bonus = len(self.snake) * 2 
+            self.energy = self.initial_energy + energy_bonus
+            
             self._place_apple()
             
             # Se NÃO deve crescer, remove a cauda mesmo comendo
