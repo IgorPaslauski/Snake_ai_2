@@ -41,8 +41,8 @@ def main():
     ELITISM = max(2, int(POPULATION_SIZE * 0.05)) # 5% de elitismo
     MUTATION_STD = 0.2
     
-    # Arquitetura da MLP: Input=6 (Danger=3, Angle=1, Dist=1, Size=1), Hidden=[16, 12], Output=3
-    LAYER_SIZES = [6, 16, 12, 3]
+    # Arquitetura da MLP: Input=8 (Danger=3, Angle=1, Size=1, TailPath=3), Hidden=[16, 12], Output=3
+    LAYER_SIZES = [8, 16, 12, 3]
     
     EPISODES_PER_EVAL = 3
     SNAPSHOT_INTERVAL = 50
@@ -50,12 +50,14 @@ def main():
     # Visualização
     LIVE_DASHBOARD = user_config["live_dashboard"]
     VIEW_SPEED = user_config["fps"]
+    NUM_GAMES = user_config.get("num_games", 9)  # Padrão 9 se não existir
     
     print("\n--- Configuração Iniciada ---")
     print(f"Gerações: {GENERATIONS}")
     print(f"População: {POPULATION_SIZE}")
     print(f"Crescer corpo: {user_config['grow_on_eat']}")
     print(f"Dashboard: {LIVE_DASHBOARD}")
+    print(f"Jogos Visualizados: {NUM_GAMES}")
     print("-----------------------------\n")
     
     # --- Inicialização ---
@@ -87,7 +89,7 @@ def main():
     dashboard = None
     if LIVE_DASHBOARD:
         print("Inicializando Dashboard Interativo...")
-        dashboard = DashboardRenderer(ENV_CONFIG, LAYER_SIZES, caption="Treinamento Snake AI - Monitoramento em Tempo Real")
+        dashboard = DashboardRenderer(ENV_CONFIG, LAYER_SIZES, caption="Treinamento Snake AI - Monitoramento em Tempo Real", num_games=NUM_GAMES)
     
     print(f"Iniciando treinamento por {GENERATIONS} gerações...")
     
@@ -132,13 +134,14 @@ def main():
                 # Atualizar dados do gráfico
                 dashboard.update_graph_data(gen, best_fit, mean_fit)
                 
-                # Selecionar top 9 para exibir
-                top_9_indices = sorted_indices[:9]
-                top_9_genomes = [population[i] for i in top_9_indices]
+                # Selecionar genomas para exibir baseado na configuração
+                num_to_show = NUM_GAMES
+                top_indices = sorted_indices[:num_to_show]
+                top_genomes = [population[i] for i in top_indices]
                 
                 # Renderizar visualização paralela
                 nn.set_weights_flat(best_gen_genome) 
-                should_quit = dashboard.render_generation(top_9_genomes, nn, speed=VIEW_SPEED)
+                should_quit = dashboard.render_generation(top_genomes, nn, speed=VIEW_SPEED)
                 
                 if should_quit:
                     print("\nVisualização fechada pelo usuário. Encerrando treinamento...")

@@ -5,16 +5,21 @@ from ..env.state_encoding import encode_state
 from ..agents.neural_net import NeuralNetwork
 
 class DashboardRenderer:
-    def __init__(self, env_config: dict, layer_sizes: list[int], caption: str = "Snake AI Training Dashboard"):
+    def __init__(self, env_config: dict, layer_sizes: list[int], caption: str = "Snake AI Training Dashboard", num_games: int = 9):
         pygame.init()
         
         self.env_config = env_config
         self.layer_sizes = layer_sizes
         
         # Configurações de Grid de Jogos
-        self.grid_rows = 3
-        self.grid_cols = 3
-        self.num_games = self.grid_rows * self.grid_cols
+        # num_games pode ser 1 ou 9
+        self.num_games = max(1, min(9, num_games))
+        if self.num_games == 1:
+            self.grid_rows = 1
+            self.grid_cols = 1
+        else:
+            self.grid_rows = 3
+            self.grid_cols = 3
         self.margin = 10 # Margem entre jogos
         
         # Tamanho inicial da janela
@@ -28,6 +33,12 @@ class DashboardRenderer:
         
         self.font = pygame.font.SysFont("Arial", 12, bold=True)
         self.title_font = pygame.font.SysFont("Arial", 16, bold=True)
+        self.small_font = pygame.font.SysFont("Arial", 9)  # Fonte menor para nomes dos neurônios
+        
+        # Nomes dos neurônios de entrada (baseado em state_encoding.py)
+        self.input_names = ["Perigo F", "Perigo D", "Perigo E", "Ângulo", "Tamanho", "Cauda F", "Cauda D", "Cauda E"]
+        # Nomes dos neurônios de saída
+        self.output_names = ["Esquerda", "Frente", "Direita"]
         
         # Dados do gráfico
         self.gen_history = []
@@ -142,6 +153,18 @@ class DashboardRenderer:
                 elif event.type == pygame.VIDEORESIZE:
                     self.recalculate_layout(event.w, event.h)
                     self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                elif event.type == pygame.KEYDOWN:
+                    # Teclas 1 e 9 para mudar número de jogos
+                    if event.key == pygame.K_1:
+                        self.num_games = 1
+                        self.grid_rows = 1
+                        self.grid_cols = 1
+                        self.recalculate_layout(self.total_w, self.total_h)
+                    elif event.key == pygame.K_9:
+                        self.num_games = 9
+                        self.grid_rows = 3
+                        self.grid_cols = 3
+                        self.recalculate_layout(self.total_w, self.total_h)
             
             self.screen.fill((20, 20, 25)) # Fundo levemente azulado escuro
             
@@ -248,6 +271,10 @@ class DashboardRenderer:
         title = self.title_font.render("Neural Network (Best Agent)", True, (220, 220, 220))
         self.screen.blit(title, (area_x + 20, 10))
         
+        # Instruções para mudar número de jogos
+        instrucoes = self.font.render("Pressione 1 ou 9 para mudar número de jogos", True, (150, 150, 150))
+        self.screen.blit(instrucoes, (area_x + 20, area_h - 20))
+        
         if len(activations) != len(self.node_positions): return
 
         # Conexões
@@ -296,6 +323,29 @@ class DashboardRenderer:
                 
                 pygame.draw.circle(self.screen, color, pos, radius)
                 pygame.draw.circle(self.screen, (200, 200, 200), pos, radius, 1) # Borda branca
+                
+                # Adicionar nome do neurônio
+                nome = ""
+                if l == 0:  # Camada de entrada
+                    if i < len(self.input_names):
+                        nome = self.input_names[i]
+                elif l == len(self.node_positions) - 1:  # Camada de saída
+                    if i < len(self.output_names):
+                        nome = self.output_names[i]
+                else:  # Camadas ocultas
+                    nome = f"H{i+1}"
+                
+                if nome:
+                    # Desenhar nome ao lado do neurônio
+                    # Posicionar à direita do neurônio para inputs/hidden, abaixo para outputs
+                    if l == len(self.node_positions) - 1:  # Output: abaixo
+                        text_surf = self.small_font.render(nome, True, (200, 200, 200))
+                        text_rect = text_surf.get_rect(center=(pos[0], pos[1] + radius + 10))
+                    else:  # Input/Hidden: à direita
+                        text_surf = self.small_font.render(nome, True, (200, 200, 200))
+                        text_rect = text_surf.get_rect(midleft=(pos[0] + radius + 5, pos[1]))
+                    
+                    self.screen.blit(text_surf, text_rect)
 
     def _draw_graph(self):
         area_x = self.games_area_w + 20

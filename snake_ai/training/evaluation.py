@@ -35,6 +35,7 @@ def evaluate_genome(
         
         max_steps = 2000 
         
+        collision_reason = None
         while not done and steps < max_steps:
             state_vec = encode_state(env)
             output = nn.forward(state_vec)
@@ -42,6 +43,10 @@ def evaluate_genome(
             
             _, _, done, info = env.step(action)
             steps += 1
+            
+            # Capturar motivo da colisão se o jogo terminou
+            if done and "reason" in info:
+                collision_reason = info["reason"]
             
         score = env.score
         final_len = len(env.snake)
@@ -59,6 +64,10 @@ def evaluate_genome(
             # Penalidade extra se morreu cedo sem comer nada
             if score == 0:
                 episode_fitness -= 50 # Punição forte por incompetência inicial
+            
+            # Penalidade aumentada por bater na parede
+            if collision_reason == "wall_collision":
+                episode_fitness -= 200 # Penalidade alta por colisão com parede
                 
         else:
             # FASE DE SOBREVIVÊNCIA
@@ -67,6 +76,14 @@ def evaluate_genome(
             # Passo vale muito mais (1.0 ou mais), pois cada passo vivo é vitória.
             
             episode_fitness = (score * 200) + (steps * 2.0) # Scaling up rewards
+            
+            # Penalidade aumentada por bater na parede
+            if collision_reason == "wall_collision":
+                episode_fitness -= 300 # Penalidade muito alta por colisão com parede na fase de sobrevivência
+            
+            # Penalidade por colisão com corpo (menor que parede, mas ainda significativa)
+            if collision_reason == "body_collision":
+                episode_fitness -= 500 # Penalidade severa por auto-colisão
             
             # Aqui a morte é natural, mas queremos maximizar steps.
             # O score * 200 garante que comer ainda é melhor que só rodar,

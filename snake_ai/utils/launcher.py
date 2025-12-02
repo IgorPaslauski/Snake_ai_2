@@ -1,12 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
+import tkinter.messagebox
 
 class ConfigScreen:
     def __init__(self):
         self.config = {}
         self.root = tk.Tk()
         self.root.title("Snake AI Training Config")
-        self.root.geometry("400x550")
+        self.root.geometry("400x600")
         
         # Style
         style = ttk.Style()
@@ -52,6 +53,18 @@ class ConfigScreen:
         self.fps_scale.set(50)
         self.fps_scale.pack(fill=tk.X, pady=5)
         
+        # Número de Jogos Visualizados
+        games_frame = ttk.Frame(main_frame)
+        games_frame.pack(fill=tk.X, pady=10)
+        ttk.Label(games_frame, text="Número de Jogos Visualizados:").pack(anchor="w")
+        
+        self.num_games_var = tk.IntVar(value=9)
+        games_options_frame = ttk.Frame(games_frame)
+        games_options_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Radiobutton(games_options_frame, text="1 (Apenas Melhor)", variable=self.num_games_var, value=1).pack(side=tk.LEFT, padx=10)
+        ttk.Radiobutton(games_options_frame, text="9 (Grid 3x3)", variable=self.num_games_var, value=9).pack(side=tk.LEFT, padx=10)
+        
         # Start Button
         ttk.Button(main_frame, text="Iniciar Treinamento", command=self.on_start).pack(pady=20, fill=tk.X)
         
@@ -92,11 +105,12 @@ class ConfigScreen:
                 "mutation_rate": float(self.entry_mutation_rate.get()),
                 "grow_on_eat": self.grow_var.get(),
                 "live_dashboard": self.live_dash_var.get(),
-                "fps": int(self.fps_scale.get())
+                "fps": int(self.fps_scale.get()),
+                "num_games": self.num_games_var.get()
             }
             self.root.quit() # Para o mainloop mas mantém a janela até destroy
         except ValueError:
-            tk.messagebox.showerror("Erro", "Por favor, insira valores válidos.")
+            tkinter.messagebox.showerror("Erro", "Por favor, insira valores válidos.")
 
     def on_close(self):
         self.config = None # Sinaliza cancelamento

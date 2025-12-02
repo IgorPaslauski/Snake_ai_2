@@ -177,18 +177,18 @@ O ambiente simula o jogo Snake em um grid 2D:
 
 ### 2. Codificação de Estado (`encode_state`)
 
-O estado do jogo é convertido em um vetor numérico de **6 entradas**:
+O estado do jogo é convertido em um vetor numérico de **8 entradas**:
 
-1. **Perigo (3 valores)**: Flags binárias indicando colisão iminente à frente, direita e esquerda
-2. **Maçã (2 valores)**:
-   - Ângulo relativo à direção atual da cabeça (normalizado entre -1 e 1)
-   - Distância normalizada (0 a 1)
-3. **Tamanho (1 valor)**: Comprimento atual da cobra normalizado pelo tamanho máximo do grid
+1. **Perigo (3 valores)**: Flags binárias indicando colisão iminente à frente, direita e esquerda.
+2. **Maçã (1 valor)**: Ângulo relativo à direção atual da cabeça.
+3. **Tamanho (1 valor)**: Comprimento atual da cobra normalizado.
+4. **Caminho para Cauda (3 valores)**: Viabilidade de alcançar a cauda (usando Dijkstra) em cada direção.
+   - Garante que a cobra sempre tenha uma rota de fuga para evitar se fechar.
 
 ### 3. Rede Neural (`NeuralNetwork`)
 
 **Arquitetura MLP:**
-- **Entrada**: 6 neurônios (estado codificado)
+- **Entrada**: 8 neurônios (estado codificado)
 - **Camadas Ocultas**: [16, 12] neurônios com ativação **ReLU**
 - **Saída**: 3 neurônios (scores para cada ação) com ativação **Tanh**
 - **Decisão**: Ação com maior score (`argmax`)
@@ -269,7 +269,7 @@ ELITISM = 5% da população    # Quantos melhores preservar
 ### Configurações da Rede Neural
 
 ```python
-LAYER_SIZES = [6, 16, 12, 3]  # [Input, Hidden1, Hidden2, Output]
+LAYER_SIZES = [8, 16, 12, 3]  # [Input, Hidden1, Hidden2, Output]
 ```
 
 ### Configurações de Treinamento
@@ -310,7 +310,8 @@ Script para visualizar o melhor agente jogando:
 #### `env/state_encoding.py`
 **Função `encode_state(env)`**: Converte estado do jogo em vetor numérico
 - Calcula perigos (colisões iminentes)
-- Calcula posição relativa da maçã (ângulo e distância)
+- Calcula ângulo relativo da maçã
+- Calcula caminho seguro para a cauda usando Dijkstra
 - Normaliza valores para o intervalo adequado
 
 #### `agents/neural_net.py`

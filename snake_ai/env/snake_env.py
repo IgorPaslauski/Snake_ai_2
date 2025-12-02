@@ -76,10 +76,16 @@ class SnakeEnv:
         reward = 0
         
         # Colisão (Parede ou Corpo)
-        if (x < 0 or x >= self.width or y < 0 or y >= self.height or new_head in self.snake[:-1]):
+        # Verificar colisão com parede primeiro
+        if (x < 0 or x >= self.width or y < 0 or y >= self.height):
             self.done = True
-            reward = -1.0
-            return self._get_state_info(), reward, self.done, {"score": self.score, "reason": "collision"}
+            reward = -10.0
+            return self._get_state_info(), reward, self.done, {"score": self.score, "reason": "wall_collision"}
+        # Verificar colisão com corpo
+        elif new_head in self.snake[:-1]:
+            self.done = True
+            reward = -30.0
+            return self._get_state_info(), reward, self.done, {"score": self.score, "reason": "body_collision"}
         
         # Energia
         if self.energy <= 0:
